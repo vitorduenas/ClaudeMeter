@@ -257,8 +257,8 @@ class DashboardWindow:
                 left_accent.pack(side="left", fill="y")
                 left_accent.pack_propagate(False)
 
-                body = tk.Frame(card_inner, bg="#181818", padx=(14, 0))
-                body.pack(side="left", fill="x", expand=True)
+                body = tk.Frame(card_inner, bg="#181818")
+                body.pack(side="left", fill="x", expand=True, padx=(14, 0))
 
                 title_row = tk.Frame(body, bg="#181818")
                 title_row.pack(fill="x")
