@@ -94,30 +94,58 @@ def poll_api(token: str) -> dict | None:
     }
 
 
+def _status_color(p: int):
+    if p >= 80:
+        return (192, 57, 43)
+    if p >= 50:
+        return (217, 119, 87)
+    return (120, 140, 93)
+
+
 def create_tray_image(session_pct: int, weekly_pct: int) -> Image.Image:
     size = 64
     img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
-    draw = ImageDraw.Draw(img)
+
+    peak = max(session_pct, weekly_pct)
+    r, g, b = _status_color(peak)
 
     cx, cy = size // 2, size // 2
-    r1, r2 = 22, 28
+    radius = 22
 
-    def color_for(p: int):
-        if p >= 80:
-            return "#c0392b"
-        if p >= 50:
-            return "#d97757"
-        return "#788c5d"
+    glow = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+    gdraw = ImageDraw.Draw(glow)
+    for i in range(8, 0, -1):
+        a = int(28 / (8 - i + 1))
+        gdraw.ellipse(
+            (cx - radius - i, cy - radius - i, cx + radius + i, cy + radius + i),
+            fill=(r, g, b, a),
+        )
 
-    draw.arc((cx - r2, cy - r2, cx + r2, cy + r2), 0, 360, fill="#333333", width=4)
+    inner = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+    idraw = ImageDraw.Draw(inner)
 
-    draw.arc((cx - r2, cy - r2, cx + r2, cy + r2), -90, -90 + int(360 * session_pct / 100),
-             fill=color_for(session_pct), width=4)
+    idraw.ellipse(
+        (cx - radius, cy - radius, cx + radius, cy + radius),
+        fill=(r, g, b),
+    )
 
-    draw.arc((cx - r1, cy - r1, cx + r1, cy + r1), -90, -90 + int(360 * weekly_pct / 100),
-             fill=color_for(weekly_pct), width=4)
+    highlight = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+    hdraw = ImageDraw.Draw(highlight)
+    hdraw.ellipse(
+        (cx - radius + 2, cy - radius + 2, cx + 2, cy + 2),
+        fill=(255, 255, 255, 55),
+    )
 
-    draw.ellipse((cx - 4, cy - 4, cx + 4, cy + 4), fill="#faf9f5")
+    img = Image.alpha_composite(img, glow)
+    img = Image.alpha_composite(img, inner)
+    img = Image.alpha_composite(img, highlight)
+
+    draw = ImageDraw.Draw(img)
+    draw.ellipse(
+        (cx - radius, cy - radius, cx + radius, cy + radius),
+        outline=(0, 0, 0, 60),
+        width=1,
+    )
 
     return img
 
