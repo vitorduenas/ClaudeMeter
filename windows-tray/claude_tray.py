@@ -1,4 +1,4 @@
-"""Clawdmeter Windows Traybar App
+"""Claude Windows Traybar App
 Polls Claude Code API usage and displays in system tray.
 """
 
@@ -163,7 +163,7 @@ class DashboardWindow:
             return
 
         self._window = tk.Tk()
-        self._window.title("Clawdmeter - Claude Code Usage")
+        self._window.title("Claude - Claude Code Usage")
         self._window.configure(bg="#1a1a1a")
         self._window.resizable(False, False)
         self._window.overrideredirect(True)
@@ -204,7 +204,7 @@ class DashboardWindow:
         orb_canvas.pack()
         orb_canvas.create_oval(2, 2, 14, 14, fill=accent_color, outline="")
 
-        tk.Label(title_bar, text="Clawdmeter", bg="#202020", fg="#faf9f5",
+        tk.Label(title_bar, text="Claude", bg="#202020", fg="#faf9f5",
                  font=("Segoe UI", 10, "bold")).pack(side="left")
 
         close_btn = tk.Label(title_bar, text="✕", bg="#202020", fg="#666666",
@@ -353,7 +353,7 @@ class DashboardWindow:
             self._window = None
 
 
-class ClawdmeterTray:
+class ClaudeTray:
     def __init__(self):
         self.data = None
         self.running = True
@@ -393,7 +393,7 @@ class ClawdmeterTray:
             self.icon.icon = img
             sp, wp = data["s"], data["w"]
             st = data["st"]
-            self.icon.title = f"Clawdmeter | Session: {sp}% | Weekly: {wp}% | {st}"
+            self.icon.title = f"Claude | Session: {sp}% | Weekly: {wp}% | {st}"
 
     def _poll_loop(self):
         backoff = 1
@@ -429,7 +429,7 @@ class ClawdmeterTray:
             pystray.Menu.SEPARATOR,
             pystray.MenuItem("Exit", self.on_exit),
         )
-        self.icon = pystray.Icon("clawdmeter", img, "Clawdmeter", menu)
+        self.icon = pystray.Icon("claude", img, "Claude", menu)
 
         self.poll_thread = threading.Thread(target=self._poll_loop, daemon=True)
         self.poll_thread.start()
@@ -438,5 +438,5 @@ class ClawdmeterTray:
 
 
 if __name__ == "__main__":
-    app = ClawdmeterTray()
+    app = ClaudeTray()
     app.run()

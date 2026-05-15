@@ -1,5 +1,5 @@
 @echo off
-title Clawdmeter
+title Claude
 cd /d "%~dp0"
 
 echo Checking Python...
@@ -57,6 +57,6 @@ if %ERRORLEVEL% NEQ 0 (
     exit /b 1
 )
 
-echo Starting Clawdmeter...
-python clawdmeter_tray.py
+echo Starting Claude...
+python claude_tray.py
 pause
