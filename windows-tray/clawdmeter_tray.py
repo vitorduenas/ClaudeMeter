@@ -157,7 +157,6 @@ class DashboardWindow:
 
     def show(self, data: dict | None):
         import tkinter as tk
-        from tkinter import ttk
         if self._window and self._window.winfo_exists():
             self._window.lift()
             self._window.focus_force()
@@ -169,27 +168,51 @@ class DashboardWindow:
         self._window.resizable(False, False)
         self._window.overrideredirect(True)
 
-        win_w, win_h = 380, 320
+        win_w, win_h = 400, 340
         sw = self._window.winfo_screenwidth()
         sh = self._window.winfo_screenheight()
         x = sw - win_w - 20
         y = 50
         self._window.geometry(f"{win_w}x{win_h}+{x}+{y}")
 
-        container = tk.Frame(self._window, bg="#1a1a1a", highlightbackground="#333333", highlightthickness=1)
+        container = tk.Frame(
+            self._window, bg="#1a1a1a",
+            highlightbackground="#2a2a2a", highlightthickness=1
+        )
         container.pack(fill="both", expand=True)
 
-        title_bar = tk.Frame(container, bg="#2a2a2a", height=32)
+        if data and data.get("ok"):
+            peak = max(data["s"], data["w"])
+        else:
+            peak = 0
+
+        accent_color = "#c0392b" if peak >= 80 else "#d97757" if peak >= 50 else "#788c5d"
+
+        accent = tk.Frame(container, bg=accent_color, height=3)
+        accent.pack(fill="x")
+        accent.pack_propagate(False)
+
+        title_bar = tk.Frame(container, bg="#202020", height=36)
         title_bar.pack(fill="x")
         title_bar.pack_propagate(False)
 
-        tk.Label(title_bar, text="Clawdmeter", bg="#2a2a2a", fg="#faf9f5",
-                 font=("Segoe UI", 10, "bold")).pack(side="left", padx=10, pady=4)
+        orb_frame = tk.Frame(title_bar, bg="#202020", width=16, height=16)
+        orb_frame.pack(side="left", padx=(10, 6), pady=0)
+        orb_frame.pack_propagate(False)
+        orb_canvas = tk.Canvas(orb_frame, width=16, height=16, bg="#202020",
+                               highlightthickness=0)
+        orb_canvas.pack()
+        orb_canvas.create_oval(2, 2, 14, 14, fill=accent_color, outline="")
 
-        close_btn = tk.Label(title_bar, text="✕", bg="#2a2a2a", fg="#b0aea5",
+        tk.Label(title_bar, text="Clawdmeter", bg="#202020", fg="#faf9f5",
+                 font=("Segoe UI", 10, "bold")).pack(side="left")
+
+        close_btn = tk.Label(title_bar, text="✕", bg="#202020", fg="#666666",
                              font=("Segoe UI", 12), cursor="hand2")
-        close_btn.pack(side="right", padx=10, pady=4)
+        close_btn.pack(side="right", padx=10)
         close_btn.bind("<Button-1>", lambda e: self._close())
+        close_btn.bind("<Enter>", lambda e: close_btn.config(fg="#faf9f5"))
+        close_btn.bind("<Leave>", lambda e: close_btn.config(fg="#666666"))
 
         def start_move(event):
             self._window.x = event.x
@@ -205,12 +228,11 @@ class DashboardWindow:
         title_bar.bind("<Button-1>", start_move)
         title_bar.bind("<B1-Motion>", do_move)
 
-        content = tk.Frame(container, bg="#1a1a1a", padx=20, pady=16)
-        content.pack(fill="both", expand=True)
+        sep = tk.Frame(container, bg="#2a2a2a", height=1)
+        sep.pack(fill="x")
 
-        font_lg = ("Segoe UI", 28, "bold")
-        font_md = ("Segoe UI", 11)
-        font_sm = ("Segoe UI", 9)
+        content = tk.Frame(container, bg="#1a1a1a", padx=24, pady=18)
+        content.pack(fill="both", expand=True)
 
         if data and data.get("ok"):
             sp, wp = data["s"], data["w"]
@@ -220,68 +242,98 @@ class DashboardWindow:
             def bar_color(p):
                 return "#c0392b" if p >= 80 else "#d97757" if p >= 50 else "#788c5d"
 
-            row1 = tk.Frame(content, bg="#1a1a1a")
-            row1.pack(fill="x", pady=(0, 4))
+            for label, pct, reset, color_args in [
+                ("Session", sp, sr, {"fg": bar_color(sp)}),
+                ("Weekly", wp, wr, {"fg": bar_color(wp)}),
+            ]:
+                card = tk.Frame(content, bg="#181818", highlightbackground="#242424",
+                                highlightthickness=1)
+                card.pack(fill="x", pady=(0, 12))
 
-            tk.Label(row1, text="Session (5h)", bg="#1a1a1a", fg="#b0aea5",
-                     font=font_md).pack(anchor="w")
+                card_inner = tk.Frame(card, bg="#181818", padx=16, pady=12)
+                card_inner.pack(fill="x", expand=True)
 
-            pct_frame = tk.Frame(row1, bg="#1a1a1a")
-            pct_frame.pack(fill="x")
+                left_accent = tk.Frame(card_inner, bg=color_args["fg"], width=3)
+                left_accent.pack(side="left", fill="y")
+                left_accent.pack_propagate(False)
 
-            tk.Label(pct_frame, text=f"{sp}%", bg="#1a1a1a", fg=bar_color(sp),
-                     font=font_lg).pack(side="left")
+                body = tk.Frame(card_inner, bg="#181818", padx=(14, 0))
+                body.pack(side="left", fill="x", expand=True)
 
-            tk.Label(pct_frame, text=f"resets in {sr}m" if sr > 0 else "resetting...",
-                     bg="#1a1a1a", fg="#666666", font=font_sm).pack(side="right", anchor="s")
+                title_row = tk.Frame(body, bg="#181818")
+                title_row.pack(fill="x")
 
-            bar_frame = tk.Frame(content, bg="#333333", height=8)
-            bar_frame.pack(fill="x", pady=(0, 16))
-            bar_frame.pack_propagate(False)
+                tk.Label(title_row, text=label, bg="#181818", fg="#b0aea5",
+                         font=("Segoe UI", 10)).pack(side="left")
 
-            fill = tk.Frame(bar_frame, bg=bar_color(sp), width=int(380 * sp / 100))
-            fill.pack(side="left", fill="y")
+                sub_label = "5h session" if label == "Session" else "7d rolling"
+                tk.Label(title_row, text=sub_label, bg="#181818", fg="#555555",
+                         font=("Segoe UI", 8)).pack(side="left", padx=(6, 0))
 
-            row2 = tk.Frame(content, bg="#1a1a1a")
-            row2.pack(fill="x", pady=(0, 4))
+                pct_row = tk.Frame(body, bg="#181818")
+                pct_row.pack(fill="x", pady=(2, 0))
 
-            tk.Label(row2, text="Weekly (7d)", bg="#1a1a1a", fg="#b0aea5",
-                     font=font_md).pack(anchor="w")
+                canvas_size = 32
+                cframe = tk.Frame(pct_row, bg="#181818", width=canvas_size,
+                                  height=canvas_size)
+                cframe.pack(side="left")
+                cframe.pack_propagate(False)
+                c = tk.Canvas(cframe, width=canvas_size, height=canvas_size,
+                              bg="#181818", highlightthickness=0)
+                c.pack()
 
-            pct_frame2 = tk.Frame(row2, bg="#1a1a1a")
-            pct_frame2.pack(fill="x")
+                r = int((canvas_size / 2) - 3)
+                cx_, cy_ = canvas_size // 2, canvas_size // 2
+                c.create_oval(cx_ - r, cy_ - r, cx_ + r, cy_ + r,
+                              outline="#2a2a2a", width=3)
 
-            tk.Label(pct_frame2, text=f"{wp}%", bg="#1a1a1a", fg=bar_color(wp),
-                     font=font_lg).pack(side="left")
+                c.create_arc(
+                    cx_ - r, cy_ - r, cx_ + r, cy_ + r,
+                    start=90, extent=-int(360 * pct / 100),
+                    outline=bar_color(pct), width=3, style="arc"
+                )
 
-            tk.Label(pct_frame2, text=f"resets in {wr}m" if wr > 0 else "resetting...",
-                     bg="#1a1a1a", fg="#666666", font=font_sm).pack(side="right", anchor="s")
+                tk.Label(pct_row, text=f"{pct}%", bg="#181818",
+                         fg=bar_color(pct),
+                         font=("Segoe UI", 24, "bold")).pack(side="left", padx=(8, 0))
 
-            bar_frame2 = tk.Frame(content, bg="#333333", height=8)
-            bar_frame2.pack(fill="x", pady=(0, 16))
-            bar_frame2.pack_propagate(False)
+                bar_bg = tk.Frame(body, bg="#242424", height=6)
+                bar_bg.pack(fill="x", pady=(6, 0))
+                bar_bg.pack_propagate(False)
 
-            fill2 = tk.Frame(bar_frame2, bg=bar_color(wp), width=int(380 * wp / 100))
-            fill2.pack(side="left", fill="y")
+                bw = int((400 - 24 * 2 - 16 * 2 - 14) * pct / 100)
+                fill_bar = tk.Frame(bar_bg, bg=bar_color(pct), width=bw)
+                fill_bar.pack(side="left", fill="y")
+
+                reset_text = f"resets in {reset}m" if reset > 0 else "resetting..."
+                tk.Label(body, text=reset_text, bg="#181818", fg="#555555",
+                         font=("Segoe UI", 8)).pack(anchor="e", pady=(3, 0))
 
             status_colors = {"allowed": "#788c5d", "warning": "#d97757", "blocked": "#c0392b"}
             sc = status_colors.get(st, "#b0aea5")
             status_frame = tk.Frame(content, bg="#1a1a1a")
-            status_frame.pack(fill="x")
+            status_frame.pack(fill="x", pady=(0, 4))
 
-            tk.Label(status_frame, text="Status:", bg="#1a1a1a", fg="#b0aea5",
-                     font=font_md).pack(side="left")
+            bulb = tk.Frame(status_frame, bg="#1a1a1a", width=10, height=10)
+            bulb.pack(side="left")
+            bulb.pack_propagate(False)
+            bulb_c = tk.Canvas(bulb, width=10, height=10, bg="#1a1a1a",
+                               highlightthickness=0)
+            bulb_c.pack()
+            bulb_c.create_oval(1, 1, 9, 9, fill=sc, outline="")
 
             tk.Label(status_frame, text=st.upper(), bg="#1a1a1a", fg=sc,
-                     font=("Segoe UI", 11, "bold")).pack(side="left", padx=(8, 0))
+                     font=("Segoe UI", 10, "bold")).pack(side="left", padx=(5, 0))
 
-            tk.Label(content, text="Click tray icon → Show Dashboard to refresh",
-                     bg="#1a1a1a", fg="#555555", font=font_sm).pack(side="bottom", pady=(8, 0))
+            tk.Label(status_frame, text="Click Refresh Now to update",
+                     bg="#1a1a1a", fg="#444444",
+                     font=("Segoe UI", 8)).pack(side="right")
         else:
             tk.Label(content, text="No data available", bg="#1a1a1a", fg="#c0392b",
-                     font=font_lg).pack(expand=True)
-            tk.Label(content, text="Check your API token in ~/.claude/.credentials.json",
-                     bg="#1a1a1a", fg="#666666", font=font_sm).pack()
+                     font=("Segoe UI", 22, "bold")).pack(expand=True)
+            tk.Label(content, text="Check ~/.claude/.credentials.json",
+                     bg="#1a1a1a", fg="#666666",
+                     font=("Segoe UI", 10)).pack()
 
         self._window.after(100, self._fade_in)
         self._window.mainloop()
@@ -290,7 +342,7 @@ class DashboardWindow:
         try:
             alpha = self._window.attributes("-alpha")
             if alpha < 1.0:
-                self._window.attributes("-alpha", min(alpha + 0.1, 1.0))
+                self._window.attributes("-alpha", min(alpha + 1.0, 1.0))
                 self._window.after(30, self._fade_in)
         except tk.TclError:
             pass
